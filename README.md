@@ -9,7 +9,9 @@ This project utilizes a **Radial Basis Function (RBF) Neural Network** to classi
 The model is built using the [evorbf](https://github.com/thieu1995/EvoRBF) library from  and `scikit-learn`.
 It is designed to handle non-linear decision boundaries, allowing it to distinguish complex nutritional cases (e.g., distinguishing high-carb healthy grains from high-carb sugary snacks).
 
-Simulates a real-world scenario by training on historical data (first 16,000 records) and testing on new/unseen data (remaining \~4,000 records). The dataset is reppresented by USDA Branded Food Nutrient Dataset pubicly available at [USDA](https://fdc.nal.usda.gov/).
+Simulates a real-world scenario by training on historical data (first **16,000** records, reppresenting the 80% of dataset records) and testing on new/unseen data (remaining \**~4,000** records, the remaining 20%), of which only 3608 (18%) records are considered valid and tested.
+
+The dataset is reppresented by USDA Branded Food Nutrient Dataset pubicly available at [USDA](https://fdc.nal.usda.gov/).
 
 ## Dependencies
 
