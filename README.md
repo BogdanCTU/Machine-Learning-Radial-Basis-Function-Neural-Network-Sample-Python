@@ -1,6 +1,6 @@
 # Machine-Learning-Radial-Basis-Function-Neural-Network-Sample-Python
 
-# Food Nutrient Classifier
+# Bindary Food Nutrient Classifier (using EvoRBF on Python)
 
 ## Overview
 
