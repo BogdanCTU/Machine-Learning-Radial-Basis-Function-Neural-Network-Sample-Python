@@ -1,0 +1,118 @@
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
+import joblib
+
+# ---------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------
+csv_path = "INPUT.csv"
+label_col = "NUTRI_SCORE"  # Target is now the 0-10 score
+split_index = 16000
+
+feature_cols = [
+    "ENERGY", "PROTEIN", "CARBS", "TOTAL_FAT",
+    "SATURATED_FAT", "FIBER", "SUGARS"
+]
+
+# ---------------------------------------------------------------------
+# Load and clean dataset
+# ---------------------------------------------------------------------
+print(f"Loading {csv_path}...")
+df = pd.read_csv(csv_path, sep=';')
+
+# Drop rows with missing values in features OR the score column
+df = df[feature_cols + [label_col]].dropna()
+
+# ---------------------------------------------------------------------
+# Preprocessing
+# ---------------------------------------------------------------------
+# NOTE: No LabelEncoder needed. The target is already a continuous number (0-10).
+y_all = df[label_col].values
+X_all = df[feature_cols].values
+
+# ---------------------------------------------------------------------
+# SPLITTING: Manual Split at 16,000
+# ---------------------------------------------------------------------
+X_train = X_all[:split_index]
+y_train = y_all[:split_index]
+
+X_test = X_all[split_index:]
+y_test = y_all[split_index:]
+
+print(f"Training Data Size: {len(X_train)} records")
+print(f"Testing Data Size:  {len(X_test)} records")
+
+# ---------------------------------------------------------------------
+# Scaling
+# ---------------------------------------------------------------------
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# ---------------------------------------------------------------------
+# Train Decision Tree Regressor
+# ---------------------------------------------------------------------
+model = DecisionTreeRegressor(
+    random_state=42,
+    max_depth=12,  # Slightly deeper for a granular 0-10 scale
+    min_samples_leaf=10  # Prevents the tree from obsessing over outliers
+)
+
+print("\nTraining Decision Tree Regressor on first 16,000 records...")
+model.fit(X_train, y_train)
+
+# ---------------------------------------------------------------------
+# Evaluation on the Last 4,000 Records
+# ---------------------------------------------------------------------
+print("\nEvaluating on the last 4,000 records...")
+y_pred = model.predict(X_test)
+
+# Calculate Errors
+mse = mean_squared_error(y_test, y_pred)
+mae = mean_absolute_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print("-" * 40)
+print(f"REGRESSION RESULTS (Target Range: 0 - 10):")
+print("-" * 40)
+print(f"Mean Absolute Error (MAE): {mae:.4f}")
+print(f"   -> On average, the prediction is off by {mae:.2f} points.")
+print(f"Mean Squared Error (MSE):  {mse:.4f}")
+print(f"R-Squared Score (R2):      {r2:.4f}")
+print("-" * 40)
+
+
+# ---------------------------------------------------------------------
+# Specific Sample Check
+# ---------------------------------------------------------------------
+def predict_nutri_score(nutrient_dict):
+    """
+    Takes a dictionary of nutrients and returns the predicted Nutri-Score (0-10).
+    """
+    df_input = pd.DataFrame([nutrient_dict])[feature_cols]
+    x_scaled = scaler.transform(df_input.values)
+
+    # Direct regression prediction
+    predicted_score = model.predict(x_scaled)[0]
+
+    return predicted_score
+
+
+# Example Usage
+sample_food = {
+    "ENERGY": 250,
+    "PROTEIN": 12,
+    "CARBS": 30,
+    "TOTAL_FAT": 8,
+    "SATURATED_FAT": 2,
+    "FIBER": 5,
+    "SUGARS": 12
+}
+
+score = predict_nutri_score(sample_food)
+print(f"\nExample Prediction:")
+print(f"Input: {sample_food}")
+print(f"Predicted Nutri-Score: {score:.2f} / 10.0")
